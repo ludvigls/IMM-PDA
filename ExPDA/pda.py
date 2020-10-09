@@ -35,7 +35,6 @@ class PDA(Generic[ET]):  # Probabilistic Data Association
         M = Z.shape[0]
         g_squared = self.gate_size ** 2
 
-
         # The loop can be done using ether of these: normal loop, list comprehension or map
         gated =  # TODO: some for loop over elements of Z using self.state_filter.gate
 

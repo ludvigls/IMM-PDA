@@ -113,7 +113,7 @@ class IMM(Generic[MT]):
         ]
         return modestates_pred
 
-    def predict(
+    def predict( #NB!!! DOES THE ENTIRITY OF IMM
         self,
         immstate: MixtureParameters[MT],
         # sampling time
@@ -226,13 +226,23 @@ class IMM(Generic[MT]):
 
         mode_conditioned_ll = np.fromiter(
             (
-                None  # TODO: your state filter (fs under) should be able to calculate the mode conditional log likelihood at z from modestate_s
+                #None  # TODO: your state filter (fs under) should be able to calculate the mode conditional log likelihood at z from modestate_s
                 for fs, modestate_s in zip(self.filters, immstate.components)
             ),
             dtype=float,
         )
 
-        ll = None  # weighted average of likelihoods (not log!)
+        #(7.55)
+        #ll = None  # weighted average of likelihoods (not log!)
+        ll = 0
+        print(mode_conditioned_ll)
+
+        #V_oppned # normalization constant, p(z_k | mode, z_k-1..)
+        for i in range(len(mode_conditioned_ll)):
+            ll += mode_conditioned_ll[i]
+
+        #normalize l1 
+        ll = np.log(l1)
 
         assert np.isfinite(ll), "IMM.loglikelihood: ll not finite"
         assert isinstance(ll, float) or isinstance(
