@@ -237,7 +237,7 @@ class IMM(Generic[MT]):
         )
 
 
-        ll = np.log(np.sum(immstate.weights*np.exp(mode_conditioned_ll)))
+        ll = np.log(np.sum(immstate.weights*np.exp(mode_conditioned_ll))) # log((7.55))
 
         assert np.isfinite(ll), "IMM.loglikelihood: ll not finite"
         assert isinstance(ll, float) or isinstance(
@@ -278,7 +278,7 @@ class IMM(Generic[MT]):
         )
 
         # flip conditioning order with Bayes to get Pr(s), and Pr(a | s)
-        mode_prob, mode_conditioned_component_prob = discretebayes.discrete_bayes(weights,component_conditioned_mode_prob) #dic bayes
+        mode_prob, mode_conditioned_component_prob = discretebayes.discrete_bayes(weights,component_conditioned_mode_prob) #disc bayes
 
         # We need to gather all the state parameters from the associations for mode s into a
         # single list in order to reduce it to a single parameter set.
