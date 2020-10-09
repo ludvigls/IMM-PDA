@@ -48,3 +48,13 @@ def distance_sequence(
     true_seq_indexed = true_seq if idxs is None else true_seq[:, idxs]
     dists = np.linalg.norm(mean_seq_indexed - true_seq_indexed, axis=-1)
     return dists
+
+
+#added
+def NEES_indexed(mean, cov,true, idxs: Sequence[int],) -> float:    
+    mean_indexed = mean[idxs]    
+    true_indexed = true[idxs]    
+    cov_indexed = cov[idxs, :][:, idxs]
+    error = mean_indexed - true_indexed    
+    NEES = error.T @ np.linalg.solve(cov_indexed, error)
+    return NEES

@@ -217,9 +217,7 @@ class EKF:
 
         cholS = la.cholesky(S, lower=True)
 
-        v=v.T
         invcholS_v = la.solve_triangular(cholS, v, lower=True)
-        print("passed")
         NISby2 = (invcholS_v ** 2).sum() / 2
         # alternative self.NIS(...) /2 or v @ la.solve(S, v)/2
 
@@ -254,6 +252,5 @@ class EKF:
         """ Check if z is inside sqrt(gate_sized_squared)-sigma ellipse of ekfstate in sensor_state """
         NIS = self.NIS(z, ekfstate, sensor_state=sensor_state)
 
-        #raise NotImplementedError  # TODO: remove this line when implemented
-
-        return (NIS < gate_size_square)  # TODO: a simple comparison should suffice here
+        raise NotImplementedError  # TODO: remove this line when implemented
+        return None  # TODO: a simple comparison should suffice here

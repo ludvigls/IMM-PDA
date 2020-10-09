@@ -113,7 +113,7 @@ class IMM(Generic[MT]):
         ]
         return modestates_pred
 
-    def predict( #NB!!! DOES THE ENTIRITY OF IMM
+    def predict(
         self,
         immstate: MixtureParameters[MT],
         # sampling time
@@ -169,6 +169,9 @@ class IMM(Generic[MT]):
             ]
         )
 
+        #print("BRUHHH")
+        #print(loglikelihood)
+
         logjoint = loglikelihood + np.log(immstate.weights)
 
         updated_mode_probabilities = np.exp(logjoint - logsumexp(logjoint))
@@ -222,27 +225,18 @@ class IMM(Generic[MT]):
         sensor_state: Dict[str, Any] = None,
     ) -> float:
 
-        raise NotImplementedError  # TODO: remove when implemented
+        #print("LOOGGGGLIKELYHOOODUUU!!!")
+        #raise NotImplementedError  # TODO: remove when implemented
 
         mode_conditioned_ll = np.fromiter(
             (
-                #None  # TODO: your state filter (fs under) should be able to calculate the mode conditional log likelihood at z from modestate_s
+                fs.loglikelihood(z, modestate_s, sensor_state=sensor_state) #TODO: your state filter (fs under) should be able to calculate the mode conditional log likelihood at z from modestate_s
                 for fs, modestate_s in zip(self.filters, immstate.components)
             ),
             dtype=float,
         )
 
-        #(7.55)
-        #ll = None  # weighted average of likelihoods (not log!)
-        ll = 0
-        print(mode_conditioned_ll)
-
-        #V_oppned # normalization constant, p(z_k | mode, z_k-1..)
-        for i in range(len(mode_conditioned_ll)):
-            ll += mode_conditioned_ll[i]
-
-        #normalize l1 
-        ll = np.log(l1)
+        ll = np.log(np.sum(immstate.weights*np.exp(mode_conditioned_ll))) # log((7.55))
 
         assert np.isfinite(ll), "IMM.loglikelihood: ll not finite"
         assert isinstance(ll, float) or isinstance(
@@ -273,7 +267,7 @@ class IMM(Generic[MT]):
             - reduce self.filter[s].reduce_mixture for each s
         """
 
-        raise NotImplementedError  # TODO remove this when done
+        #raise NotImplementedError  # TODO remove this when done
         # extract probabilities as array
         ## eg. association weights/beta: Pr(a)
         weights = immstate_mixture.weights
@@ -283,7 +277,7 @@ class IMM(Generic[MT]):
         )
 
         # flip conditioning order with Bayes to get Pr(s), and Pr(a | s)
-        mode_prob, mode_conditioned_component_prob = None  # TODO
+        mode_prob, mode_conditioned_component_prob = discretebayes.discrete_bayes(weights,component_conditioned_mode_prob) #disc bayes
 
         # We need to gather all the state parameters from the associations for mode s into a
         # single list in order to reduce it to a single parameter set.
@@ -291,7 +285,10 @@ class IMM(Generic[MT]):
         # into a single list and append the result of self.filters[s].reduce_mixture
         # The mode s for association j should be available as imm_mixture.components[j].components[s]
 
-        mode_states: List[GaussParams] = None  # TODO
+        coponenets_pr_mode=zip(*[comp.components for comp in immstate_mixture.components])
+
+        mode_states = [fs.reduce_mixture(MixtureParameters(weight, components)) for weight, components, fs in zip(mode_conditioned_component_prob, coponenets_pr_mode,self.filters)]
+        #mode_states: List[GaussParams] = [fs.reduce_mixture(MixtureParameters(weight, components)) for weight, components, fs in zip(mode_conditioned_component_prob, coponenets_pr_mode,self.filters)]
 
         immstate_reduced = MixtureParameters(mode_prob, mode_states)
 
@@ -313,13 +310,17 @@ class IMM(Generic[MT]):
     ) -> bool:
         """Check if z is within the gate of any mode in immstate in sensor_state"""
 
-        raise NotImplementedError  # TODO: remove when implemented
-
         # TODO: find which of the modes gates the measurement z, Hint: self.filters[0].gate
         mode_gated: List[bool] = None
 
-        gated: bool = None  # TODO: check if _any_ of the modes gated the measurement
-        return gated
+        #Due to having several modes we need to use NISes
+        NIS, NISes = self.NISes(z, immstate, sensor_state=sensor_state)
+
+        for NIS_i in NISes:
+            if (NIS_i < gate_size_square):
+                return True
+        return False
+
 
     def NISes(
         self,
