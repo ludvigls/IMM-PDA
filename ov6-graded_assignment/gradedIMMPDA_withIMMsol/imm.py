@@ -169,9 +169,6 @@ class IMM(Generic[MT]):
             ]
         )
 
-        #print("BRUHHH")
-        #print(loglikelihood)
-
         logjoint = loglikelihood + np.log(immstate.weights)
 
         updated_mode_probabilities = np.exp(logjoint - logsumexp(logjoint))
@@ -230,7 +227,7 @@ class IMM(Generic[MT]):
         """
         mode_conditioned_ll = np.fromiter(
             (
-                fs.loglikelihood(z, modestate_s, sensor_state=sensor_state) #TODO: your state filter (fs under) should be able to calculate the mode conditional log likelihood at z from modestate_s
+                fs.loglikelihood(z, modestate_s, sensor_state=sensor_state) #your state filter (fs under) should be able to calculate the mode conditional log likelihood at z from modestate_s
                 for fs, modestate_s in zip(self.filters, immstate.components)
             ),
             dtype=float,
@@ -336,6 +333,7 @@ class IMM(Generic[MT]):
         #Due to having several modes we need to use NISes
         NIS, NISes = self.NISes(z, immstate, sensor_state=sensor_state)
 
+        #Only one of the modes NIS needs to be within gate
         for NIS_i in NISes:
             if (NIS_i < gate_size_square):
                 return True
