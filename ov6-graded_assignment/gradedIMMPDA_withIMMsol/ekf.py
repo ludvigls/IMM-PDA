@@ -253,6 +253,4 @@ class EKF:
         """ Check if z is inside sqrt(gate_sized_squared)-sigma ellipse of ekfstate in sensor_state """
         NIS = self.NIS(z, ekfstate, sensor_state=sensor_state)
 
-        #raise NotImplementedError  # TODO: remove this line when implemented
-
-        return (NIS < gate_size_square)  # TODO: a simple comparison should suffice here
+        return (NIS < gate_size_square)  #a simple comparison should suffice here

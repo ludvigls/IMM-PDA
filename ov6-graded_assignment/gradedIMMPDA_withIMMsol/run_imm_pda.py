@@ -129,13 +129,13 @@ PD = 0.8
 gate_size = 5
 
 # dynamic models
-sigma_a_CV = 0.5
+sigma_a_CV = 0.5 # high 
 sigma_a_CT = 0.5
 sigma_omega = 0.3
 
 
 # markov chain
-PI11 = 0.9
+PI11 = 0.9 #transition between state 1 and state1
 PI22 = 0.9
 
 p10 = 0.9  # initvalue for mode probabilities
