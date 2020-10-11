@@ -178,6 +178,7 @@ tracker_predict_list = []
 tracker_estimate_list = []
 # estimate
 for k, (Zk, x_true_k) in enumerate(zip(Z, Xgt)):
+    Zk=Zk[0]
     tracker_predict = tracker.predict(tracker_update, Ts)
     tracker_update = tracker.update(Zk, tracker_predict)
 
