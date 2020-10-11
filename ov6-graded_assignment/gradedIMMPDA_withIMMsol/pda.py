@@ -56,8 +56,6 @@ class PDA(Generic[ET]):  # Probabilistic Data Association
         # calculate log likelihood ratios
         ll[0] = log_PND + log_clutter # missed detection
         
-        for z in Z:
-            print(z)
             #ll=np.append(ll,self.state_filter.loglikelihood( z, filter_state, sensor_state=sensor_state)+log_PD)
         
         ll[1:] = np.array(

@@ -1,19 +1,4 @@
 # %% imports
-import scipy
-import scipy.io
-import scipy.stats
-
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-
-import dynamicmodels
-import measurementmodels
-import ekf
-import imm
-import pda
-
-
 from typing import List
 
 import scipy
@@ -86,55 +71,15 @@ except Exception as e:
 
 
 # %% load data and plot
-filename_to_load = "data_joyride.mat"
+filename_to_load = "data_for_imm_pda.mat"
 loaded_data = scipy.io.loadmat(filename_to_load)
 K = loaded_data["K"].item()
-Ts = loaded_data["Ts"].squeeze()
-Ts=np.append(Ts[0],Ts)
+Ts = loaded_data["Ts"].item()
 Xgt = loaded_data["Xgt"].T
 Z = [zk.T for zk in loaded_data["Z"].ravel()]
-
-
-# plot measurements close to the trajectory
+true_association = loaded_data["a"].ravel()
 
 # plot measurements close to the trajectory
-fig1, ax1 = plt.subplots(num=1, clear=True)
-
-Z_plot_data = np.empty((0, 2), dtype=float)
-plot_measurement_distance = 45
-for Zk, xgtk in zip(Z, Xgt):
-    to_plot = np.linalg.norm(Zk - xgtk[None:2], axis=1) <= plot_measurement_distance
-    Z_plot_data = np.append(Z_plot_data, Zk[to_plot], axis=0)
-
-ax1.scatter(*Z_plot_data.T, color="C1")
-ax1.plot(*Xgt.T[:2], color="C0", linewidth=1.5)
-ax1.set_title("True trajectory and the nearby measurements")
-plt.show(block=False)
-
-# %% play measurement movie. Remember that you can cross out the window
-
-play_movie = False
-play_slice = slice(0, K)
-if play_movie:
-    if "inline" in matplotlib.get_backend():
-        print("the movie might not play with inline plots")
-    fig2, ax2 = plt.subplots(num=2, clear=True)
-    sh = ax2.scatter(np.nan, np.nan)
-    th = ax2.set_title(f"measurements at step 0")
-    mins = np.vstack(Z).min(axis=0)
-    maxes = np.vstack(Z).max(axis=0)
-    ax2.axis([mins[0], maxes[0], mins[1], maxes[1]])
-    plotpause = 0.1
-    # sets a pause in between time steps if it goes to fast
-    for k, Zk in enumerate(Z[play_slice]):
-        sh.set_offsets(Zk)
-        th.set_text(f"measurements at step {k}")
-        fig2.canvas.draw_idle()
-        plt.show(block=False)
-        plt.pause(plotpause)
-
-# %% setup and track
-
 fig1, ax1 = plt.subplots(num=1, clear=True)
 
 Z_plot_data = np.empty((0, 2), dtype=float)
@@ -178,15 +123,15 @@ if play_movie:
 # but no exceptions do not guarantee correct implementation.
 
 # sensor
-sigma_z = 10
-clutter_intensity = 1e-2
-PD = 0.8
-gate_size = 5
+sigma_z = 3
+clutter_intensity = 0.002
+PD = 0.99
+gate_size = 3
 
 # dynamic models
-sigma_a_CV = 0.5
-sigma_a_CT = 0.5
-sigma_omega = 0.3
+sigma_a_CV = 0.3
+sigma_a_CT = 0.1
+sigma_omega = 0.002*np.pi
 
 
 # markov chain
@@ -198,9 +143,10 @@ p10 = 0.9  # initvalue for mode probabilities
 PI = np.array([[PI11, (1 - PI11)], [(1 - PI22), PI22]])
 assert np.allclose(np.sum(PI, axis=1), 1), "rows of PI must sum to 1"
 
+# not valid
+
 mean_init = np.array([0, 0, 0, 0, 0])
-#cov_init = np.diag([1000, 1000, 30, 30, 0.1]) ** 2  # THIS WILL NOT BE GOOD
-cov_init = np.diag([1, 1, 30, 30, 0.1]) ** 2
+cov_init = np.diag([50, 50, 1, 1, 0.1]) ** 2  # THIS WILL NOT BE GOOD
 mode_probabilities_init = np.array([p10, (1 - p10)])
 mode_states_init = GaussParams(mean_init, cov_init)
 init_imm_state = MixtureParameters(mode_probabilities_init, [mode_states_init] * 2)
@@ -233,17 +179,23 @@ tracker_update_list = []
 tracker_predict_list = []
 tracker_estimate_list = []
 # estimate
-for k, (Zk, x_true_k,ts) in enumerate(zip(Z, Xgt,Ts)):
-    Zk=Zk[0]
-    tracker_predict = tracker.predict(tracker_update, ts)
+for k, (Zk, x_true_k) in enumerate(zip(Z, Xgt)):
+    tracker_predict = tracker.predict(tracker_update, Ts)
     tracker_update = tracker.update(Zk, tracker_predict)
 
     # You can look at the prediction estimate as well
     tracker_estimate = tracker.estimate(tracker_update)
 
-    NEES[k] = estats.NEES(*tracker_estimate, x_true_k, idxs=np.arange(4))
-    NEESpos[k] = estats.NEES(*tracker_estimate, x_true_k, idxs=np.arange(2))
-    NEESvel[k] = estats.NEES(*tracker_estimate, x_true_k, idxs=np.arange(2, 4))
+    NEES[k] = estats.NEES_indexed(
+        tracker_estimate.mean, tracker_estimate.cov, x_true_k, idxs=np.arange(4)
+    )
+
+    NEESpos[k] = estats.NEES_indexed(
+        tracker_estimate.mean, tracker_estimate.cov, x_true_k, idxs=np.arange(2)
+    )
+    NEESvel[k] = estats.NEES_indexed(
+        tracker_estimate.mean, tracker_estimate.cov, x_true_k, idxs=np.arange(2, 4)
+    )
 
     tracker_predict_list.append(tracker_predict)
     tracker_update_list.append(tracker_update)
@@ -276,7 +228,7 @@ CI4K = np.array(scipy.stats.chi2.interval(confprob, 4 * K)) / K
 ANEESpos = np.mean(NEESpos)
 ANEESvel = np.mean(NEESvel)
 ANEES = np.mean(NEES)
-Ts=Ts[0]
+
 # %% plots
 # trajectory
 fig3, axs3 = plt.subplots(1, 2, num=3, clear=True)
