@@ -69,6 +69,7 @@ class PDA(Generic[ET]):  # Probabilistic Data Association
         ]
         )
         ll[1:] += log_PD
+        return ll
 
     def association_probabilities(
         self,
@@ -110,9 +111,8 @@ class PDA(Generic[ET]):  # Probabilistic Data Association
             # TODO: some loop over Z making a list of updates
         )
         """
-        return [filter_state] + [
-            self.state_filter.update(zj, filter_state, sensor_state=sensor_state)
-        for zj in Z]
+
+        return [filter_state] + [ self.state_filter.update(zj, filter_state, sensor_state=sensor_state) for zj in Z]
 
 
         

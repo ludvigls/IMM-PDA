@@ -10,6 +10,8 @@ import measurementmodels
 import ekf
 import pda
 
+import estimationstatistics as est
+
 # %% plot config check and style setup
 
 # to see your plot config
@@ -132,13 +134,17 @@ tracker_update_list = []
 tracker_predict_list = []
 # estimate
 for k, (Zk, x_true_k) in enumerate(zip(Z, Xgt)):
+    Zk = Zk[0]
     tracker_predict = tracker.predict(tracker_update, Ts)
     tracker_update = tracker.update(Zk, tracker_predict)
-    NEES[k] = tracker.state_filter.NEES(tracker_update, x_true_k, idx=np.arange(4))
-    NEESpos[k] = tracker.state_filter.NEES(tracker_update, x_true_k, idx=np.arange(2))
-    NEESvel[k] = tracker.state_filter.NEES(
-    tracker_update, x_true_k, idx=np.arange(2, 4)
-    )
+
+    x, P = tracker_update
+    NEES[k] = est.NEES(x,P,x_true_k, idxs=np.arange(4))
+    NEESpos[k] = est.NEES(x,P,x_true_k, idxs=np.arange(2))
+    NEESvel[k] = est.NEES(x,P,x_true_k, idxs=np.arange(2, 4))
+    #NEES[k] = tracker.state_filter.NEES(tracker_update, x_true_k, idx=np.arange(4))
+    #NEESpos[k] = tracker.state_filter.NEES(tracker_update, x_true_k, idx=np.arange(2))
+    #NEESvel[k] = tracker.state_filter.NEES(tracker_update, x_true_k, idx=np.arange(2, 4))
     tracker_predict_list.append(tracker_predict)
     tracker_update_list.append(tracker_update)
 x_hat = np.array([upd.mean for upd in tracker_update_list])
