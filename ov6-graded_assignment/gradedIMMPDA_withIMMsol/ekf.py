@@ -216,10 +216,9 @@ class EKF:
         v, S = self.innovation(z, ekfstate, sensor_state=sensor_state)
 
         cholS = la.cholesky(S, lower=True)
-
-        v=v.T
+        
         invcholS_v = la.solve_triangular(cholS, v, lower=True)
-        print("passed")
+        
         NISby2 = (invcholS_v ** 2).sum() / 2
         # alternative self.NIS(...) /2 or v @ la.solve(S, v)/2
 
