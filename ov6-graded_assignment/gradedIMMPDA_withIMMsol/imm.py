@@ -222,7 +222,6 @@ class IMM(Generic[MT]):
         sensor_state: Dict[str, Any] = None,
     ) -> float:
 
-        #print("LOOGGGGLIKELYHOOODUUU!!!")
         #raise NotImplementedError  # TODO: remove when implemented
         """
         mode_conditioned_ll = np.fromiter(
@@ -234,7 +233,6 @@ class IMM(Generic[MT]):
         )
         
         mode_prob = np.exp(mode_conditioned_ll) # p(s | Zk...)
-        print(immstate.weights*mode_prob)
         ll = np.log(np.sum(immstate.weights*mode_prob)) # log((7.55))
 
         assert np.isfinite(ll), "IMM.loglikelihood: ll not finite"
@@ -253,7 +251,7 @@ class IMM(Generic[MT]):
         # ll = np.log(ll)
         
         ll = logsumexp(mode_conditioned_ll, b=immstate.weights)
-        print(ll)
+        #print(ll)
         assert np.isfinite(ll), "IMM.loglikelihood: ll not finite"
         assert isinstance(ll, float) or isinstance(
             ll.item(), float

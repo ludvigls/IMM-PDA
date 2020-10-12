@@ -123,6 +123,7 @@ if play_movie:
 # but no exceptions do not guarantee correct implementation.
 
 # sensor
+"""
 sigma_z = 10
 clutter_intensity = 1e-2
 PD = 0.8
@@ -132,6 +133,19 @@ gate_size = 5
 sigma_a_CV = 0.5 # high 
 sigma_a_CT = 0.5
 sigma_omega = 0.3
+"""
+
+#Rendell
+# sensor
+sigma_z = 3
+clutter_intensity = 0.002
+PD = 0.99
+gate_size = 3
+
+# dynamic models
+sigma_a_CV = 0.3
+sigma_a_CT = 0.1
+sigma_omega = 0.002*np.pi
 
 
 # markov chain
@@ -145,7 +159,9 @@ assert np.allclose(np.sum(PI, axis=1), 1), "rows of PI must sum to 1"
 
 mean_init = np.array([0, 0, 0, 0, 0])
 #cov_init = np.diag([1000, 1000, 30, 30, 0.1]) ** 2  # THIS WILL NOT BE GOOD
-cov_init = np.diag([1, 1, 30, 30, 0.1]) ** 2
+#cov_init = np.diag([1, 1, 30, 30, 0.1]) ** 2
+cov_init = np.diag([50, 50, 1, 1, 0.1]) ** 2
+
 mode_probabilities_init = np.array([p10, (1 - p10)])
 mode_states_init = GaussParams(mean_init, cov_init)
 init_imm_state = MixtureParameters(mode_probabilities_init, [mode_states_init] * 2)
@@ -179,7 +195,6 @@ tracker_predict_list = []
 tracker_estimate_list = []
 # estimate
 for k, (Zk, x_true_k) in enumerate(zip(Z, Xgt)):
-    Zk=Zk[0]
     tracker_predict = tracker.predict(tracker_update, Ts)
     tracker_update = tracker.update(Zk, tracker_predict)
 

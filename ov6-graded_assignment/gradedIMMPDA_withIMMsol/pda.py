@@ -35,7 +35,7 @@ class PDA(Generic[ET]):  # Probabilistic Data Association
         """Gate/validate measurements: (z-h(x))'S^(-1)(z-h(x)) <= g^2."""
 
         gated = np.array([self.state_filter.gate(zj,filter_state,sensor_state=sensor_state,gate_size_square=self.gate_size ** 2,)for zj in Z],dtype=bool,)
-
+        return gated
 
     def loglikelihood_ratios(
         self,  # measurements of shape=(M, m)=(#measurements, dim)
@@ -171,6 +171,8 @@ class PDA(Generic[ET]):  # Probabilistic Data Association
         filter_state_updated = self.update(
         Z, filter_state_predicted, sensor_state=sensor_state
         )
+
+        return filter_state_updated
 
 
     def estimate(self, filter_state: ET) -> GaussParams:
