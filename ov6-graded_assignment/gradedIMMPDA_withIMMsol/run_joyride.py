@@ -178,16 +178,15 @@ if play_movie:
 # but no exceptions do not guarantee correct implementation.
 
 # sensor
-sigma_z = 10
-clutter_intensity = 1e-2
-PD = 0.8
+sigma_z = 3
+clutter_intensity = 0.00009
+PD = 0.95
 gate_size = 5
 
 # dynamic models
 sigma_a_CV = 0.5
-sigma_a_CT = 0.5
-sigma_omega = 0.3
-
+sigma_a_CT = 0.4
+sigma_omega = 0.03*np.pi
 
 # markov chain
 PI11 = 0.9
@@ -198,9 +197,9 @@ p10 = 0.9  # initvalue for mode probabilities
 PI = np.array([[PI11, (1 - PI11)], [(1 - PI22), PI22]])
 assert np.allclose(np.sum(PI, axis=1), 1), "rows of PI must sum to 1"
 
-mean_init = np.array([0, 0, 0, 0, 0])
-#cov_init = np.diag([1000, 1000, 30, 30, 0.1]) ** 2  # THIS WILL NOT BE GOOD
-cov_init = np.diag([1, 1, 30, 30, 0.1]) ** 2
+# init values
+mean_init = np.array([4800, 1600, 0, 0, 0])
+cov_init = np.diag([1000, 1000, 10, 10, 0.1]) ** 2  
 mode_probabilities_init = np.array([p10, (1 - p10)])
 mode_states_init = GaussParams(mean_init, cov_init)
 init_imm_state = MixtureParameters(mode_probabilities_init, [mode_states_init] * 2)
@@ -234,7 +233,6 @@ tracker_predict_list = []
 tracker_estimate_list = []
 # estimate
 for k, (Zk, x_true_k,ts) in enumerate(zip(Z, Xgt,Ts)):
-    Zk=Zk[0]
     tracker_predict = tracker.predict(tracker_update, ts)
     tracker_update = tracker.update(Zk, tracker_predict)
 
@@ -309,7 +307,7 @@ axs4[1].set_title(f"{inCIvel*100:.1f}% inside {confprob*100:.1f}% CI")
 axs4[2].plot(np.arange(K) * Ts, NEES)
 axs4[2].plot([0, (K - 1) * Ts], np.repeat(CI4[None], 2, 0), "--r")
 axs4[2].set_ylabel("NEES")
-inCI = np.mean((CI2[0] <= NEES) * (NEES <= CI2[1]))
+inCI = np.mean((CI2[0] <= NEES) * (NEES <= CI4[1]))
 axs4[2].set_title(f"{inCI*100:.1f}% inside {confprob*100:.1f}% CI")
 
 print(f"ANEESpos = {ANEESpos:.2f} with CI = [{CI2K[0]:.2f}, {CI2K[1]:.2f}]")
