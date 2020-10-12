@@ -253,7 +253,6 @@ class IMM(Generic[MT]):
         # ll = np.log(ll)
         
         ll = logsumexp(mode_conditioned_ll, b=immstate.weights)
-        print(ll)
         assert np.isfinite(ll), "IMM.loglikelihood: ll not finite"
         assert isinstance(ll, float) or isinstance(
             ll.item(), float
