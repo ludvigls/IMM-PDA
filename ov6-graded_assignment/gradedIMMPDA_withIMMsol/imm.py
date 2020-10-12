@@ -222,8 +222,7 @@ class IMM(Generic[MT]):
         sensor_state: Dict[str, Any] = None,
     ) -> float:
 
-        #raise NotImplementedError  # TODO: remove when implemented
-        """
+
         mode_conditioned_ll = np.fromiter(
             (
                 fs.loglikelihood(z, modestate_s, sensor_state=sensor_state) #your state filter (fs under) should be able to calculate the mode conditional log likelihood at z from modestate_s
@@ -231,32 +230,15 @@ class IMM(Generic[MT]):
             ),
             dtype=float,
         )
-        
-        mode_prob = np.exp(mode_conditioned_ll) # p(s | Zk...)
+
+
+        mode_prob = np.exp(mode_conditioned_ll) #remove log to get P(sk | Z,1..k-1)
         ll = np.log(np.sum(immstate.weights*mode_prob)) # log((7.55))
 
         assert np.isfinite(ll), "IMM.loglikelihood: ll not finite"
         assert isinstance(ll, float) or isinstance(
             ll.item(), float
         ), "IMM.loglikelihood: did not calculate ll to be a single float"
-        """
-        mode_conditioned_ll = [
-            self.filters[i].loglikelihood(z, immstate.components[i], sensor_state=sensor_state)
-            for i in range(len(self.filters))
-        ]
-
-        # ll = 0
-        # for i in range(len(mode_conditioned_ll)):
-        #     ll += immstate.weights[i] * np.exp(mode_conditioned_ll[i])
-        # ll = np.log(ll)
-        
-        ll = logsumexp(mode_conditioned_ll, b=immstate.weights)
-        #print(ll)
-        assert np.isfinite(ll), "IMM.loglikelihood: ll not finite"
-        assert isinstance(ll, float) or isinstance(
-            ll.item(), float
-        ), "IMM.loglikelihood: did not calculate ll to be a single float"
-        
         return ll
 
     def reduce_mixture(
@@ -324,9 +306,6 @@ class IMM(Generic[MT]):
         sensor_state: Dict[str, Any] = None,
     ) -> bool:
         """Check if z is within the gate of any mode in immstate in sensor_state"""
-
-        # TODO: find which of the modes gates the measurement z, Hint: self.filters[0].gate
-        mode_gated: List[bool] = None
 
         #Due to having several modes we need to use NISes
         NIS, NISes = self.NISes(z, immstate, sensor_state=sensor_state)

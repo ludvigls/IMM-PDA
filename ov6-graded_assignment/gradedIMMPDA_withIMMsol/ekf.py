@@ -227,9 +227,6 @@ class EKF:
 
         ll = -(NISby2 + logdetSby2 + self._MLOG2PIby2)
 
-        # simplest overall alternative
-        # ll = scipy.stats.multivariate_normal.logpdf(v, cov=S)
-
         return ll
 
     def reduce_mixture(

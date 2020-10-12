@@ -98,17 +98,6 @@ class PDA(Generic[ET]):  # Probabilistic Data Association
         ET
     ]:  # Updated filter_state for all association events, first element is no detection
         """Update the state with all possible measurement associations."""
-        """
-        conditional_update = []
-        conditional_update.append(
-            # TODO: missed detection
-            filter_state
-        )
-        conditional_update.extend(
-            [state_filter.update(z,  filter_state,sensor_state=sensor_state) for z in Z]
-            # TODO: some loop over Z making a list of updates
-        )
-        """
 
         return [filter_state] + [ self.state_filter.update(zj, filter_state, sensor_state=sensor_state) for zj in Z]
 
