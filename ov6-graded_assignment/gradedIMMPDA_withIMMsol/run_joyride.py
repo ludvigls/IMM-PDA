@@ -179,27 +179,27 @@ if play_movie:
 
 # sensor
 sigma_z = 3
-clutter_intensity = 0.00009
+clutter_intensity = 0.0001
 PD = 0.95
 gate_size = 5
 
 # dynamic models
-sigma_a_CV = 0.5
-sigma_a_CT = 0.4
+sigma_a_CV = 10
+sigma_a_CT = 4
 sigma_omega = 0.03*np.pi
 
 # markov chain
-PI11 = 0.9
-PI22 = 0.9
+PI11 = 0.8
+PI22 = 0.8
 
-p10 = 0.9  # initvalue for mode probabilities
+p10 = 0.6  # initvalue for mode probabilities
 
 PI = np.array([[PI11, (1 - PI11)], [(1 - PI22), PI22]])
 assert np.allclose(np.sum(PI, axis=1), 1), "rows of PI must sum to 1"
 
 # init values
-mean_init = np.array([4800, 1600, 0, 0, 0])
-cov_init = np.diag([1000, 1000, 10, 10, 0.1]) ** 2  
+mean_init = np.array([4800, 1600, 2, 0, 0])
+cov_init = np.diag([100, 100, 10, 10, 0.1]) ** 2  
 mode_probabilities_init = np.array([p10, (1 - p10)])
 mode_states_init = GaussParams(mean_init, cov_init)
 init_imm_state = MixtureParameters(mode_probabilities_init, [mode_states_init] * 2)
