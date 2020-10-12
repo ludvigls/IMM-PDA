@@ -135,21 +135,20 @@ sigma_a_CT = 0.5
 sigma_omega = 0.3
 """
 
-#Rendell
 # sensor
-sigma_z = 3
-clutter_intensity = 0.002
-PD = 0.99
-gate_size = 3
+sigma_z = 3.0
+clutter_intensity = 2*10**(-3)
+PD = 0.9999 #1 is ideal (becaus "missed detections removed") but causes an error in discrete bayes
+gate_size = 5.0
 
 # dynamic models
-sigma_a_CV = 0.3
-sigma_a_CT = 0.1
-sigma_omega = 0.002*np.pi
+sigma_a_CV = 0.35
+sigma_a_CT = 0.05
+sigma_omega = 0.01
 
 
 # markov chain
-PI11 = 0.9 #transition between state 1 and state1
+PI11 = 0.9 
 PI22 = 0.9
 
 p10 = 0.9  # initvalue for mode probabilities
@@ -158,9 +157,7 @@ PI = np.array([[PI11, (1 - PI11)], [(1 - PI22), PI22]])
 assert np.allclose(np.sum(PI, axis=1), 1), "rows of PI must sum to 1"
 
 mean_init = np.array([0, 0, 0, 0, 0])
-#cov_init = np.diag([1000, 1000, 30, 30, 0.1]) ** 2  # THIS WILL NOT BE GOOD
-#cov_init = np.diag([1, 1, 30, 30, 0.1]) ** 2
-cov_init = np.diag([50, 50, 1, 1, 0.1]) ** 2
+cov_init = np.diag([35, 35, 1, 1, 1]) ** 2
 
 mode_probabilities_init = np.array([p10, (1 - p10)])
 mode_states_init = GaussParams(mean_init, cov_init)
