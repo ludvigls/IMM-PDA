@@ -94,7 +94,6 @@ Ts=np.append(Ts[0],Ts)
 Xgt = loaded_data["Xgt"].T
 Z = [zk.T for zk in loaded_data["Z"].ravel()]
 
-
 # plot measurements close to the trajectory
 
 # plot measurements close to the trajectory
@@ -178,34 +177,45 @@ if play_movie:
 # but no exceptions do not guarantee correct implementation.
 
 # sensor
-sigma_z = 3
-clutter_intensity = 0.0001
-PD = 0.95
-gate_size = 5
-
+sigma_z = 6 #could be estimated
+clutter_intensity = 5*10**(-5) #recommendation from forum to be between 10^(-4) to 10^(-6)
+PD = 0.95 #can be counted in animation
+#gate_size = 2**2
+gate_size=2**2
 # dynamic models
-sigma_a_CV = 10
-sigma_a_CT = 4
-sigma_omega = 0.03*np.pi
 
+a=20
+
+sigma_a_CV = 0.25*a #0.05 or 0.5 according to figure 4.6 in the book
+sigma_a_CT = 0.05*a  #0.05 or 0.5 according to figure 4.6 in the book
+sigma_a_CV_H = sigma_a_CV*3
+dt=2.5 
+#sigma_omega = (1/(2*3*dt**2))*np.pi #endre
+sigma_omega=0.1
 # markov chain
-PI11 = 0.8
-PI22 = 0.8
+PI11 = 0.95 #The PI matrix entries are probably the most difficult ones to estimate with any degree of accuracy. 
+PI22 = 0.95 #Here I would say that we are in category 3 because these are mainly about how the helmsman changes maneuvering pattern, and this is even according to a model that is highly artificial. So we have to be pragmatic here: The probability of staying in a a particular mode should be significantly larger than the probability of changing, but nevertheless the change probabilities must be large enough that the alternative models are considered at all. 
+PI33 = 0.95 #changed from previous task
 
 p10 = 0.6  # initvalue for mode probabilities
 
-PI = np.array([[PI11, (1 - PI11)], [(1 - PI22), PI22]])
-assert np.allclose(np.sum(PI, axis=1), 1), "rows of PI must sum to 1"
+PI1 = np.array([[PI11, (1 - PI11)], [(1 - PI22), PI22]])
+assert np.allclose(np.sum(PI1, axis=1), 1), "rows of PI must sum to 1"
+
+
+PI2 = np.array([[PI11, 3*(1 - PI11)/4, (1-PI11)/4],[3*(1 - PI22)/4, PI22, (1-PI22)/4], [3*(1-PI33)/4, (1-PI33)/4, PI33]])
 
 # init values
-mean_init = np.array([4800, 1600, 2, 0, 0])
-cov_init = np.diag([100, 100, 10, 10, 0.1]) ** 2  
-mode_probabilities_init = np.array([p10, (1 - p10)])
+mean_init = np.array([7096, 3627, 0, 0, 0])
+cov_init = np.diag([10, 10, 20, 20, 0.1]) ** 2  
+mode_probabilities_init1 = np.array([p10, (1 - p10)])
 mode_states_init = GaussParams(mean_init, cov_init)
-init_imm_state = MixtureParameters(mode_probabilities_init, [mode_states_init] * 2)
+init_imm_state1 = MixtureParameters(mode_probabilities_init1, [mode_states_init] * 2)
+mode_probabilities_init2 = np.array([0.34, 0.33, 0.33]) #arbitrary doesnt have much effect
+init_imm_state2 = MixtureParameters(mode_probabilities_init2, [mode_states_init] * 3)
 
 assert np.allclose(
-    np.sum(mode_probabilities_init), 1
+    np.sum(mode_probabilities_init1), 1
 ), "initial mode probabilities must sum to 1"
 
 # make model
@@ -213,12 +223,16 @@ measurement_model = measurementmodels.CartesianPosition(sigma_z, state_dim=5)
 dynamic_models: List[dynamicmodels.DynamicModel] = []
 dynamic_models.append(dynamicmodels.WhitenoiseAccelleration(sigma_a_CV, n=5))
 dynamic_models.append(dynamicmodels.ConstantTurnrate(sigma_a_CT, sigma_omega))
+dynamic_models.append(dynamicmodels.WhitenoiseAccelleration(sigma_a_CV_H, n=5))
+
 ekf_filters = []
 ekf_filters.append(ekf.EKF(dynamic_models[0], measurement_model))
 ekf_filters.append(ekf.EKF(dynamic_models[1], measurement_model))
-imm_filter = imm.IMM(ekf_filters, PI)
-
-tracker = pda.PDA(imm_filter, clutter_intensity, PD, gate_size)
+imm_filter1 = imm.IMM(ekf_filters, PI1)
+ekf_filters.append(ekf.EKF(dynamic_models[2], measurement_model))
+imm_filter2 = imm.IMM(ekf_filters, PI2)
+tracker1 = pda.PDA(imm_filter1, clutter_intensity, PD, gate_size)
+tracker2 = pda.PDA(imm_filter2, clutter_intensity, PD, gate_size)
 
 # init_imm_pda_state = tracker.init_filter_state(init__immstate)
 
@@ -227,10 +241,14 @@ NEES = np.zeros(K)
 NEESpos = np.zeros(K)
 NEESvel = np.zeros(K)
 
-tracker_update = init_imm_state
+tracker_update1 = init_imm_state1
+tracker_update2 = init_imm_state2
 tracker_update_list = []
 tracker_predict_list = []
 tracker_estimate_list = []
+
+tracker=tracker2
+tracker_update=tracker_update2
 # estimate
 for k, (Zk, x_true_k,ts) in enumerate(zip(Z, Xgt,Ts)):
     tracker_predict = tracker.predict(tracker_update, ts)
@@ -289,7 +307,7 @@ axs3[1].plot(np.arange(K) * Ts, prob_hat)
 axs3[1].set_ylim([0, 1])
 axs3[1].set_ylabel("mode probability")
 axs3[1].set_xlabel("time")
-
+axs3[1].legend(['CV','CT','CV High'])
 # NEES
 fig4, axs4 = plt.subplots(3, sharex=True, num=4, clear=True)
 axs4[0].plot(np.arange(K) * Ts, NEESpos)

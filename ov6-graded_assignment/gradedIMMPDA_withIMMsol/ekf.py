@@ -236,6 +236,7 @@ class EKF:
         w = ekfstate_mixture.weights
         x = np.array([c.mean for c in ekfstate_mixture.components], dtype=float)
         P = np.array([c.cov for c in ekfstate_mixture.components], dtype=float)
+
         x_reduced, P_reduced = mixturereduction.gaussian_mixture_moments(w, x, P)
         return GaussParams(x_reduced, P_reduced)
 

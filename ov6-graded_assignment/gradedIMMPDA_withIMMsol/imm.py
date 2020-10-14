@@ -270,7 +270,7 @@ class IMM(Generic[MT]):
         # Pr(a | Z:1..k)
         ## eg. association weights/beta
         association_prob = immstate_mixture.weights
-
+        
         # Pr(s | a = j)
         ## eg. the association conditioned mode probabilities element [j, s] is for association j and mode s: Pr(s | a = j)
         mode_conditioned_association = np.array(
