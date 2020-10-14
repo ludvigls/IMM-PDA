@@ -61,6 +61,7 @@ class EKF:
         Ts: float,
     ) -> GaussParams:
         """Predict the EKF state Ts seconds ahead."""
+        #print("TYPPEEE!!", type(ekfstate))
         x, P = ekfstate
 
         assert isPSD(P), "P input to EKF.predict not PSD"

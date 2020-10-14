@@ -183,6 +183,14 @@ PD = 0.95 #can be counted in animation
 #gate_size = 2**2
 gate_size=2**2
 # dynamic models
+<<<<<<< Updated upstream
+=======
+sigma_a_CV = 0.5
+sigma_a_CT = 0.5 # bør være 2 params???? 
+sigma_a_CV_HIGH = sigma_a_CV*5 # NADIA
+
+sigma_omega = 0.3
+>>>>>>> Stashed changes
 
 a=20
 
@@ -193,6 +201,7 @@ dt=2.5
 #sigma_omega = (1/(2*3*dt**2))*np.pi #endre
 sigma_omega=0.1
 # markov chain
+<<<<<<< Updated upstream
 PI11 = 0.95 #The PI matrix entries are probably the most difficult ones to estimate with any degree of accuracy. 
 PI22 = 0.95 #Here I would say that we are in category 3 because these are mainly about how the helmsman changes maneuvering pattern, and this is even according to a model that is highly artificial. So we have to be pragmatic here: The probability of staying in a a particular mode should be significantly larger than the probability of changing, but nevertheless the change probabilities must be large enough that the alternative models are considered at all. 
 PI33 = 0.95 #changed from previous task
@@ -201,6 +210,11 @@ p10 = 0.6  # initvalue for mode probabilities
 
 PI1 = np.array([[PI11, (1 - PI11)], [(1 - PI22), PI22]])
 assert np.allclose(np.sum(PI1, axis=1), 1), "rows of PI must sum to 1"
+=======
+PI11 = 0.95
+PI22 = 0.95
+PI33 = 0.95 #NADIA
+>>>>>>> Stashed changes
 
 
 PI2 = np.array([[PI11, 3*(1 - PI11)/4, (1-PI11)/4],[3*(1 - PI22)/4, PI22, (1-PI22)/4], [3*(1-PI33)/4, (1-PI33)/4, PI33]])
@@ -218,11 +232,13 @@ assert np.allclose(
     np.sum(mode_probabilities_init1), 1
 ), "initial mode probabilities must sum to 1"
 
+
 # make model
 measurement_model = measurementmodels.CartesianPosition(sigma_z, state_dim=5)
 dynamic_models: List[dynamicmodels.DynamicModel] = []
 dynamic_models.append(dynamicmodels.WhitenoiseAccelleration(sigma_a_CV, n=5))
 dynamic_models.append(dynamicmodels.ConstantTurnrate(sigma_a_CT, sigma_omega))
+<<<<<<< Updated upstream
 dynamic_models.append(dynamicmodels.WhitenoiseAccelleration(sigma_a_CV_H, n=5))
 
 ekf_filters = []
@@ -233,6 +249,26 @@ ekf_filters.append(ekf.EKF(dynamic_models[2], measurement_model))
 imm_filter2 = imm.IMM(ekf_filters, PI2)
 tracker1 = pda.PDA(imm_filter1, clutter_intensity, PD, gate_size)
 tracker2 = pda.PDA(imm_filter2, clutter_intensity, PD, gate_size)
+=======
+dynamic_models.append(dynamicmodels.WhitenoiseAccelleration(sigma_a_CV_HIGH, n=5)) #ADDED AV NADIA!!!
+
+ekf_filters1 = []
+ekf_filters1.append(ekf.EKF(dynamic_models[0], measurement_model))
+ekf_filters1.append(ekf.EKF(dynamic_models[1], measurement_model))
+imm_filter1 = imm.IMM(ekf_filters, PI)
+
+#CV, CT and CV_high
+PI2 = tunes... (?????)
+
+ekf_filters2 = []
+ekf_filters2.append(ekf.EKF(dynamic_models[0], measurement_model))
+ekf_filters2.append(ekf.EKF(dynamic_models[1], measurement_model))
+ekf_filters2.append(ekf.EKF(dynamic_models[2], measurement_model))
+
+imm_filter2 = imm.IMM(ekf_filters2, PI2)
+
+tracker = pda.PDA(imm_filter1, clutter_intensity, PD, gate_size)
+>>>>>>> Stashed changes
 
 # init_imm_pda_state = tracker.init_filter_state(init__immstate)
 
