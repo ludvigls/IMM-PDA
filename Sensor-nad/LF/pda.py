@@ -1,1 +1,0 @@
-#"The solution to PDA will only come right before the deadline, if at all." - Brekke
